@@ -4,6 +4,32 @@
 # <random_contest_token>: the seed that the RNG will use to generate random passwords. This seed must obviously be secret and be unique used for the contest.
 # Running this program will write a list of domain users that can be copy-pasted to codeforces group (in the right Member management tab - click Domain users)
 
+
+use_alphabet = False # If true, use A, B, ... instead of items
+placeholder_items = [
+    "Assembly",
+    "Bash",
+    "Basic",
+    "C",
+    "CPlusPlus",
+    "CSharp",
+    "Curl",
+    "Fortran",
+    "GDScript",
+    "Go",
+    "Haskell",
+    "Java",
+    "JavaScript",
+    "Lisp",
+    "Lua",
+    "MATLAB",
+    "OCaml",
+    "Pascal",
+    "Rust",
+    "Smalltalk",
+    "Swift",
+]
+
 import hashlib
 import sys
 
@@ -14,18 +40,69 @@ def make_domain_user(team_name: str) -> str:
     while "__" in username:
         username = username.replace("__", "_")
     username = username.strip("_")
-    alphabet = "abcdefghijkmnpqrstwxyz123456789_"
+    alphabet = "abcdefghijklmnopqrstuvwxyz1234567890_"
     is_all_good_ch = True
+    filtered_name = ""
     for ch in username:
         if ch not in alphabet:
             is_all_good_ch = False
+        else:
+            filtered_name += ch
+    while len(filtered_name) >= 1 and filtered_name[0] == '_':
+        filtered_name = filtered_name[1:]
+    while len(filtered_name) >= 1 and filtered_name[-1] == '_':
+        filtered_name = filtered_name[:-1]
+    while "__" in filtered_name:
+        filtered_name = filtered_name.replace("__", "_")
+    if len(filtered_name) >= 1:
+        if is_all_good_ch and len(filtered_name) <= 5:
+            return f"team_{filtered_name}"
+        if is_all_good_ch and len(filtered_name) <= 30:
+            return filtered_name
+        if is_all_good_ch and len(filtered_name) > 30:
+            # find first _ after 25 and cut off, or cut off at 38
+            first_space = -1
+            for i in range(25, len(filtered_name)):
+                if filtered_name[i] == '_':
+                    first_space = i
+                    break
+            if first_space == -1 or first_space > 38:
+                return filtered_name[:38]
+            else:
+                return filtered_name[:first_space]
+    print(f"Problematic team names: {team_name} to {filtered_name}", file=sys.stderr)
+    if len(filtered_name) <= 5:
+        return f"team_{filtered_name}"
+    if len(filtered_name) <= 30:
+        return filtered_name
+    # find first _ after 25 and cut off, or cut off at 38
+    first_space = -1
+    for i in range(25, len(filtered_name)):
+        if filtered_name[i] == '_':
+            first_space = i
             break
-    if is_all_good_ch and len(team_name) <= 20:
-        return team_name
-    return f"user_domain" # TODO: replace
+    if first_space == -1 or first_space > 38:
+        return filtered_name[:38]
+    else:
+        return filtered_name[:first_space]
 
 def make_placeholder_name(index: int) -> str:
-    return f"Team{index}" # TODO: replace
+    if use_alphabet:
+        alphabet = "abcdefghijkmnpqrstuvwxyz"
+        alphabet = alphabet.upper()
+        base_alpha = []
+        if index == 0:
+            base_alpha = [0]
+        else:
+            while index > 0:
+                base_alpha.append(index % 26)
+                index //= 26
+        base_alpha = base_alpha[::-1]
+        team_letters = "".join([alphabet[id] for id in base_alpha])
+        return f"Team {team_letters}"
+    else:
+        assert(index < len(placeholder_items))
+        return f"Team {placeholder_items[index]}"
 
 def make_password(token: str, team_name: str) -> str:
     data = f"{token}\0{team_name}".encode("utf-8")
@@ -58,7 +135,7 @@ def main() -> None:
         sys.exit(1)
     processed_team_names = []
     placeholder_count = 0
-    for index, line in enumerate(lines):
+    for line in lines:
         original_name = line.rstrip("\r\n")
         team_name = original_name.strip()
         if not team_name:
