@@ -5,6 +5,9 @@
 # Running this program will write a list of domain users that can be copy-pasted to codeforces group (in the right Member management tab - click Domain users)
 
 
+make_password_page = True # Output a password HTML page for printing
+password_page_filename = "passwords.html"
+group_contest_url = "umcpc.contest.codeforces.com"
 use_alphabet = False # If true, use A, B, ... instead of items
 placeholder_items = [
     "Assembly",
@@ -116,6 +119,25 @@ def make_password(token: str, team_name: str) -> str:
             break
     return password
 
+def make_html_card(contest_id: str, username: str, password: str, team_name: str) -> str:
+    raw_html = """
+<div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; width: 400px; border: 1px solid gray; border-radius: 2.5px; padding: 10px; margin: 10px; break-inside: avoid;">
+  <div style="font-size: 15px; font-weight: bold;">HTML_TEAM_NAME</div>
+  <p style="margin: 5px 5px 5px 0px;">
+    login:<code style="color: dimgray; padding: 0px 10px 0px 0px;">HTML_USER_NAME</code>
+    password:<code style="color: dimgray; padding: 0px 10px 0px 0px;">HTML_PASSWORD</code>
+  </p>
+  <p style="margin: 5px 5px 5px 0px;">
+    contest link:<code style="color: dimgray; padding: 0px 10px 0px 0px;">HTML_GROUP_URL</code>
+  </p>
+</div>
+"""
+    raw_html = raw_html.replace("HTML_PASSWORD", password)
+    raw_html = raw_html.replace("HTML_USER_NAME", username)
+    raw_html = raw_html.replace("HTML_TEAM_NAME", team_name)
+    raw_html = raw_html.replace("HTML_GROUP_URL", group_contest_url)
+    return raw_html
+
 def main() -> None:
     if len(sys.argv) != 4:
         print(
@@ -134,6 +156,7 @@ def main() -> None:
         print(f"Error reading {team_file}: {e}", file=sys.stderr)
         sys.exit(1)
     processed_team_names = []
+    is_placeholder = []
     placeholder_count = 0
     for line in lines:
         original_name = line.rstrip("\r\n")
@@ -141,6 +164,9 @@ def main() -> None:
         if not team_name:
             team_name = make_placeholder_name(placeholder_count)
             placeholder_count += 1
+            is_placeholder.append(True)
+        else:
+            is_placeholder.append(False)
         processed_team_names.append(team_name)
     if len(processed_team_names) > len(set(processed_team_names)):
         print("Team names are not unique!", file=sys.stderr)
@@ -170,10 +196,20 @@ def main() -> None:
             if found_duplicate:
                 break
         sys.exit(1)
+    html_str = "<div style=\"display: grid; grid-template-columns: repeat(2, 400px); gap: 20px 60px;\">"
     for (id, team_name) in enumerate(processed_team_names):
         username = processed_usernames[id]
         password = make_password(token, team_name)
         print(f"{contest_id} | {username} | {password} | {team_name}")
+        if make_password_page:
+            card_team_name = team_name
+            if is_placeholder[id]:
+                card_team_name = "* " + card_team_name
+            html_str += make_html_card(contest_id, username, password, card_team_name)
+    html_str += "</div>"
+    if make_password_page:
+        with open(password_page_filename, "w", encoding="utf-8") as file:
+            file.write(html_str)
 
 if __name__ == "__main__":
     main()

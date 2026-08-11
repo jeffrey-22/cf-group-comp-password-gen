@@ -221,3 +221,5 @@ __marimo__/
 team_name.txt
 output.txt
 tokens.txt
+*.txt
+*.html
