@@ -60,34 +60,35 @@ def make_domain_user(team_name: str) -> str:
     if len(filtered_name) >= 1:
         if is_all_good_ch and len(filtered_name) <= 5:
             return f"team_{filtered_name}"
-        if is_all_good_ch and len(filtered_name) <= 30:
+        if is_all_good_ch and len(filtered_name) <= 24:
             return filtered_name
-        if is_all_good_ch and len(filtered_name) > 30:
-            # find first _ after 25 and cut off, or cut off at 38
+        if is_all_good_ch and len(filtered_name) > 24:
+            # find first _ after 20 and cut off, or cut off at 32
             first_space = -1
-            for i in range(25, len(filtered_name)):
+            for i in range(16, len(filtered_name)):
                 if filtered_name[i] == '_':
                     first_space = i
                     break
-            if first_space == -1 or first_space > 38:
-                return filtered_name[:38]
+            if first_space == -1 or first_space > 24:
+                return filtered_name[:24]
             else:
                 return filtered_name[:first_space]
     print(f"Problematic team names: {team_name} to {filtered_name}", file=sys.stderr)
     if len(filtered_name) <= 5:
         return f"team_{filtered_name}"
-    if len(filtered_name) <= 30:
+    if len(filtered_name) <= 24:
         return filtered_name
-    # find first _ after 25 and cut off, or cut off at 38
-    first_space = -1
-    for i in range(25, len(filtered_name)):
-        if filtered_name[i] == '_':
-            first_space = i
-            break
-    if first_space == -1 or first_space > 38:
-        return filtered_name[:38]
-    else:
-        return filtered_name[:first_space]
+    if len(filtered_name) > 24:
+        # find first _ after 20 and cut off, or cut off at 32
+        first_space = -1
+        for i in range(16, len(filtered_name)):
+            if filtered_name[i] == '_':
+                first_space = i
+                break
+        if first_space == -1 or first_space > 24:
+            return filtered_name[:24]
+        else:
+            return filtered_name[:first_space]
 
 def make_placeholder_name(index: int) -> str:
     if use_alphabet:
@@ -110,7 +111,7 @@ def make_placeholder_name(index: int) -> str:
 def make_password(token: str, team_name: str) -> str:
     data = f"{token}\0{team_name}".encode("utf-8")
     digest = hashlib.sha256(data).digest()
-    alphabet = "ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnpqrstwxyz123456789"
+    alphabet = "ABCDEFGHKLMNPQRSTWXYZabcdefghjkmnpqrstwxyz23456789"
     password = ""
     for digit in range(8):
         block = hashlib.sha256(digest + digit.to_bytes(4, "big")).digest()
