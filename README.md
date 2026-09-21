@@ -1,5 +1,7 @@
 ## How to use:
 
+First, clone this repo by running `git clone xxx`
+
 I like to create a text file named `tokens.txt`, for storing secrets. These files should be secrets.
 
 Create your contest on CF Gym Mashup. Then, you can see its URL (e.g. https://codeforces.com/gym/691856). Read and save the contest id (691856). 
